@@ -2,6 +2,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import openpyxl as px
 from itertools import groupby
+import operator
 
 
 # Funcion para lectura y obtencion de datos de inicio
@@ -27,7 +28,7 @@ def read_data(n_clientes, n_productos, n_periodos, n_vehiculos_p, n_vehiculos_s,
     total_columnas = n_productos*n_periodos
 
     # lectura y obtencion de datos de los clientes
-    datos = px.load_workbook('datos4.xlsx')                                          # carga de la hoja de excel de datos
+    datos = px.load_workbook('datos.xlsx')                                          # carga de la hoja de excel de datos
     hoja_clientes = datos['clientes']                                               # seleccionar la hoja clientes como hoja activa
     # Obtencion de las demandas de la tabla de la hoja clientes segun la cantidad de clientes, productos y periodos
     demanda_clientes = [[hoja_clientes.cell(row=i, column=j).value for j in range(2, 2+total_columnas)] for i in range(3, 3+n_clientes)]
@@ -561,25 +562,58 @@ def fitness_f2(rutas_lv, n_periodos, costo_humano, n_centros):
     return costhum
 
 
-# operador de seleccion
-def selection(poblacion, fitness):
-    ind_selec = []
-    ind_rejec = []
-    for _ in range(int(poblacion/2)):
-        rand_1 = np.random.randint(poblacion)
-        while rand_1 in ind_rejec or rand_1 in ind_selec:
-            rand_1 = np.random.randint(poblacion)
-        rand_2 = np.random.randint(poblacion)
-        while (rand_2 in ind_rejec or rand_2 in ind_selec) and rand_2 != rand_1:
-            rand_2 = np.random.randint(poblacion)
-        if fitness[rand_1] < fitness[rand_2]:
-            ind_selec.append(rand_1)
-            ind_rejec.append(rand_2)
+def frentes(n_poblacion, valores_f1, valores_f2):
+    # construccion de frentes de la poblacion inicial
+    dominancias = {}  # diccionario individuo:dominancias
+    for j in range(n_poblacion):
+        n = 0
+        for k in range(n_poblacion):
+            if j == k:
+                continue
+            else:
+                # condicion de concepto de dominancia
+                if ((valores_f1[j] >= valores_f1[k]) and (valores_f2[j] >= valores_f2[k])) and ((valores_f1[j] > valores_f1[k]) or (valores_f2[j] > valores_f2[k])):
+                    n += 1
+                else:
+                    # print("a ver a ver que paso acá")
+                    continue
+        dominancias[j] = n
+    # ordenamiento de los frentes de menor a mayor
+    frentes_dict = {}
+    dominancias_ordlist = sorted(dominancias.items(), key=operator.itemgetter(1), reverse=False)
+    for domin in dominancias_ordlist:
+        if domin[1] not in frentes_dict.keys():
+            frentes_dict[domin[1]] = [domin[0]]
         else:
-            ind_selec.append(rand_2)
-            ind_rejec.append(rand_1)
-    return ind_selec
+            frentes_dict[domin[1]].append(domin[0])
 
-# documentar inventarios, lineas adicionales y fitness
-# realizar operadores geneticos
+    # calculo de la distancia de apilamiento
+    distancias_f1 = {}
+    distancias_f2 = {}
+    distancias_t = {}
+    for frente, inds in frentes_dict.items():
+        f1_ext = {}
+        f2_ext = {}
+        if len(inds) <= 2:
+            for indi in inds:
+                distancias_f1[indi] = 0
+                distancias_f2[indi] = 0
+                distancias_t[indi] = 0
+        else:
+            for indi in inds:
+                f1_ext[indi] = valores_f1[indi]
+                f2_ext[indi] = valores_f2[indi]
+            f1_extord = sorted(f1_ext.items(), key=operator.itemgetter(1), reverse=True)
+            f2_extord = sorted(f2_ext.items(), key=operator.itemgetter(1), reverse=True)
+            distancias_f1[inds[0]] = 0
+            distancias_f1[inds[-1]] = 0
+            distancias_f2[inds[0]] = 0
+            distancias_f2[inds[-1]] = 0
+            distancias_t[inds[0]] = 0
+            distancias_t[inds[-1]] = 0
+            for idv in range(1, len(inds)-1):
+                distancias_f1[inds[idv]] = abs((f1_extord[idv+1][1] - f1_extord[idv-1][1]) / (f1_extord[0][1] - f1_extord[-1][1]))
+                distancias_f2[inds[idv]] = abs((f2_extord[idv + 1][1] - f2_extord[idv - 1][1]) / (f2_extord[0][1] - f2_extord[-1][1]))
+                distancias_t[inds[idv]] = distancias_f1[inds[idv]] + distancias_f2[inds[idv]]
 
+    return dominancias, distancias_t, frentes_dict
