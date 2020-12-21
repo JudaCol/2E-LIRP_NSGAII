@@ -15,7 +15,7 @@ n_centroslocales = 7  # numero de centros locales
 n_poblacion = 100  # numero de inidividuos a generar
 individuos = []
 demand_cr_poblation = []
-demandas_cl_full = []
+demand_cl_poblation = []
 final_inventarioQ = []
 final_inventarioI = []
 valores_f1 = []
@@ -35,7 +35,7 @@ for i in range(n_poblacion):
     # almacenamiento de las demandas de centros regionales en una lista
     demand_cr_poblation.append(demandas_cr_full)
     # almacenamiento de las demandas de centros locales en una lista
-    demandas_cl_full.append(demandas_cl)
+    demand_cl_poblation.append(demandas_cl)
     # Generacion de los valores Q e I de la gestion de inventarios
     valoresQ, valoresI = fun_inventario(demandas_cr_full, n_periodos, n_productos, n_centrosregionales, capacidad_cr, inventario)
     final_inventarioQ.append(valoresQ)
@@ -52,7 +52,7 @@ for i in range(n_poblacion):
     cost_sufr_hum = fitness_f2(rutas_segundo_lv, n_periodos, costo_humano, n_centroslocales)
     costo_f2 = -cost_sufr_hum
     valores_f2.append(costo_f2)
-demand_cl_poblation = np.copy(demandas_cl_full)
+
 # calculo de frentes y distancias
 dominancias, distancias_t, frentes_dict = frentes(n_poblacion, valores_f1, valores_f2)
 # aplicacion de los operadores en cada generacion
