@@ -1,6 +1,28 @@
-import numpy as np
+# import numpy as np
 from functions import *
 from itertools import groupby
+
+
+# operador de seleccion de padres
+def selection_padres(poblacion, dominancias, distancias):
+    parents = []
+    for _ in range(poblacion):
+        rand_1 = np.random.randint(poblacion)
+        while rand_1 in parents:
+            rand_1 = np.random.randint(poblacion)
+        rand_2 = np.random.randint(poblacion)
+        while (rand_2 in parents) and rand_2 == rand_1:
+            rand_2 = np.random.randint(poblacion)
+        if dominancias[rand_1] < dominancias[rand_2]:
+            parents.append(rand_1)
+        elif dominancias[rand_1] > dominancias[rand_2]:
+            parents.append(rand_2)
+        elif dominancias[rand_1] == dominancias[rand_2]:
+            if distancias[rand_1] > distancias[rand_2]:
+                parents.append(rand_1)
+            else:
+                parents.append(rand_2)
+    return parents
 
 
 def rutas2(asignacion_lv, n_vehiculos, capacidad_vehiculos, demanda, periodo, n_productos, escalon, mapeo):
@@ -52,7 +74,7 @@ def rutas2(asignacion_lv, n_vehiculos, capacidad_vehiculos, demanda, periodo, n_
                             mapeo.pop(mapeo.index(vehiculo_temp))
                             vehiculos.pop(vehiculos.index(vehiculo_temp))
                             vehiculo_temp = np.random.choice(mapeo)
-                        elif len(mapeo) ==1:
+                        elif len(mapeo) == 1:
                             mapeo.pop(mapeo.index(vehiculo_temp))
                             vehiculos.pop(vehiculos.index(vehiculo_temp))
                             vehiculo_temp = np.random.choice(vehiculos)
@@ -114,7 +136,7 @@ def extract_vh(padre, n_periodos, ext):
     return vh_habs
 
 
-def reconstruction_1(n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_p, capacidad_cr, capacidad_vehiculos_p, demandas_cl_cross_seg1, seg2_cr_habs_h1, seg2_vh1_habs, inventario, seg1_escalon, seg1_rutas, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano, w1, w2):
+def reconstruction_1(n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_p, capacidad_cr, capacidad_vehiculos_p, demandas_cl_cross_seg1, seg2_cr_habs_h1, seg2_vh1_habs, inventario, seg1_escalon, seg1_rutas, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano):
     rec_seg2_escalon_full = []
     rec_seg2_demand_cr_full = []
     rec_seg2_rutas = []
@@ -145,12 +167,10 @@ def reconstruction_1(n_centroslocales, n_centrosregionales, n_periodos, n_produc
     # costos f2
     cost_sufr_hum = round(fitness_f2(seg1_rutas, n_periodos, costo_humano, n_centroslocales), 3)
     hijo1_costo_f2 = -cost_sufr_hum
-    # costo total del fitness del hijo 1
-    hijo1_fitness_total = round((w1 * hijo1_costo_f1) + (w2 * hijo1_costo_f2), 3)
-    return hijo1, rec_seg2_demand_cr_full, rec_seg2_demand_cl_full, hijo1_I, hijo1_Q, hijo1_fitness_total
+    return hijo1, rec_seg2_demand_cr_full, rec_seg2_demand_cl_full, hijo1_I, hijo1_Q, hijo1_costo_f1, hijo1_costo_f2
 
 
-def reconstruction_2(n_clientes, n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_s, n_vehiculos_p, capacidad_cl, capacidad_cr, capacidad_vehiculos_p, capacidad_vehiculos_s, demanda_clientes, demandas_cl_cross_seg1, vh1_habs_h2, seg2_cr_habs_h2, vh2_habs_h2, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano, w1, w2):
+def reconstruction_2(n_clientes, n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_s, n_vehiculos_p, capacidad_cl, capacidad_cr, capacidad_vehiculos_p, capacidad_vehiculos_s, demanda_clientes, demandas_cl_cross_seg1, vh1_habs_h2, seg2_cr_habs_h2, vh2_habs_h2, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano):
     rec_seg2_escalon_full_h2 = []
     rec_seg2_demand_cr_full_h2 = []
     rec_seg2_rutas_h2 = []
@@ -188,47 +208,26 @@ def reconstruction_2(n_clientes, n_centroslocales, n_centrosregionales, n_period
     # costos f2
     cost_sufr_hum = round(fitness_f2(rec_seg1_rutas_h2, n_periodos, costo_humano, n_centroslocales), 3)
     hijo2_costo_f2 = -cost_sufr_hum
-    # costo total del fitness del hijo 1
-    hijo2_fitness_total = round((w1 * hijo2_costo_f1) + (w2 * hijo2_costo_f2), 3)
 
-    return hijo2, rec_seg2_demand_cr_full_h2, rec_seg1_demand_cl_full_h2, hijo2_I, hijo2_Q, hijo2_fitness_total
+    return hijo2, rec_seg2_demand_cr_full_h2, rec_seg1_demand_cl_full_h2, hijo2_I, hijo2_Q, hijo2_costo_f1, hijo2_costo_f2
 
 
-def crossover(individuos, n_clientes, n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_s, n_vehiculos_p, capacidad_cr, capacidad_cl, capacidad_vehiculos_p, capacidad_vehiculos_s, demanda_clientes, demandas_cl_cross, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano, w1, w2):
-    padres = np.array(range(len(individuos)))
-    crossed = []
+def crossover(individuos, idx_padres, n_clientes, n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_s, n_vehiculos_p, capacidad_cr, capacidad_cl, capacidad_vehiculos_p, capacidad_vehiculos_s, demanda_clientes, demandas_cl_cross, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano):
     hijos = []
     demand_cr_hijos = []
     demand_cl_hijos = []
     I_hijos = []
     Q_hijos = []
-    fit_hijos = []
+    f1_hijos = []
+    f2_hijos = []
     p_crossed = []
-    for _ in range(int(len(individuos)/2)):
-        # Proceso de cruce entre padres seleccionados, organizar para seleccionarlos de la lista de padres
-        acepted = 0
-        idx_p1 = np.random.choice(padres)
-        while acepted != 1:
-            if idx_p1 not in crossed:
-                crossed.append(idx_p1)
-                padres = np.delete(padres, np.where(padres == idx_p1))
-                acepted = 1
-            else:
-                idx_p1 = np.random.choice(padres)
-        # parametros iniciales de cada padre
-        padre1 = individuos[idx_p1]
-        demandas_cl_cross_seg2 = demandas_cl_cross[idx_p1]  # demandas padre 1
-        acepted = 0
-        idx_p2 = np.random.choice(padres)
-        while acepted != 1:
-            if idx_p2 not in crossed:
-                crossed.append(idx_p2)
-                padres = np.delete(padres, np.where(padres == idx_p2))
-                acepted = 1
-            else:
-                idx_p2 = np.random.choice(padres)
-        padre2 = individuos[idx_p2]
-        demandas_cl_cross_seg1 = demandas_cl_cross[idx_p2]  # demandas padre 2
+    for idx in range(0, len(idx_padres), 2):
+        padre1 = individuos[idx]
+        padre2 = individuos[idx+1]
+        p_crossed.append(padre1)
+        p_crossed.append(padre2)
+        # demandas_cl_cross_seg2 = demandas_cl_cross[idx]  # demandas padre 1
+        demandas_cl_cross_seg1 = demandas_cl_cross[idx+1]  # demandas padre 2
         # en el hijo 1 se parcializa el segmento 2
         # elementos que se heredan al hijo 1 del padre 2 y padre 1
         seg1_escalon = padre2[2]  # asignaciones de segundo escalon
@@ -236,7 +235,7 @@ def crossover(individuos, n_clientes, n_centroslocales, n_centrosregionales, n_p
         seg2_cr_habs_h1 = extract_c(padre1, n_periodos, 1)  # centros regionales habilitados en el primer escalon del padre 1
         seg2_vh1_habs = extract_vh(padre1, n_periodos, 1)  # vehiculos de primer lvl habilitados en los 3 periodos
         # parcializacion, reconstruccion y consolidacion del hijo 1
-        hijo1, rec_demand_cr_full_h1, rec_seg2_demand_cl_full, hijo1_I, hijo1_Q, hijo1_fitness_total = reconstruction_1(n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_p, capacidad_cr, capacidad_vehiculos_p, demandas_cl_cross_seg1, seg2_cr_habs_h1, seg2_vh1_habs, inventario, seg1_escalon, seg1_rutas, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano, w1, w2)
+        hijo1, rec_demand_cr_full_h1, rec_seg2_demand_cl_full, hijo1_I, hijo1_Q, hijo1_costo_f1, hijo1_costo_f2 = reconstruction_1(n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_p, capacidad_cr, capacidad_vehiculos_p, demandas_cl_cross_seg1, seg2_cr_habs_h1, seg2_vh1_habs, inventario, seg1_escalon, seg1_rutas, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano)
         # elementos que se heredan al hijo 1 del padre 2 y padre 1
         # en el hijo 2 se parcializa el segmento 1
         # elementos que se heredan al hijo 1 del padre 2 y padre 1
@@ -245,7 +244,7 @@ def crossover(individuos, n_clientes, n_centroslocales, n_centrosregionales, n_p
         # seg2_cl_habs_h2 = extract_c(padre2, n_periodos, 0)  # centros locales habilitados en el primer escalon del padre 2
         vh2_habs_h2 = extract_vh(padre1, n_periodos, 3)   # vehiculos de segundo lvl habilitados en los 3 periodos del padre 1
         # pacializacion, reconstruccion y consolidacion del hijo 2
-        hijo2, rec_seg2_demand_cr_full_h2, rec_seg1_demand_cl_full_h2, hijo2_I, hijo2_Q, hijo2_fitness_total = reconstruction_2(n_clientes, n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_s, n_vehiculos_p, capacidad_cl, capacidad_cr, capacidad_vehiculos_p, capacidad_vehiculos_s, demanda_clientes, demandas_cl_cross_seg1, vh1_habs_h2, seg2_cr_habs_h2, vh2_habs_h2, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano, w1, w2)
+        hijo2, rec_seg2_demand_cr_full_h2, rec_seg1_demand_cl_full_h2, hijo2_I, hijo2_Q, hijo2_costo_f1, hijo2_costo_f2 = reconstruction_2(n_clientes, n_centroslocales, n_centrosregionales, n_periodos, n_productos, n_vehiculos_s, n_vehiculos_p, capacidad_cl, capacidad_cr, capacidad_vehiculos_p, capacidad_vehiculos_s, demanda_clientes, demandas_cl_cross_seg1, vh1_habs_h2, seg2_cr_habs_h2, vh2_habs_h2, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, costo_vehiculos_s, costo_vehiculos_p, costo_humano)
         hijos.append(hijo1)
         hijos.append(hijo2)
         demand_cr_hijos.append(rec_demand_cr_full_h1)
@@ -256,15 +255,15 @@ def crossover(individuos, n_clientes, n_centroslocales, n_centrosregionales, n_p
         I_hijos.append(hijo2_I)
         Q_hijos.append(hijo1_Q)
         Q_hijos.append(hijo2_Q)
-        fit_hijos.append(hijo1_fitness_total)
-        fit_hijos.append(hijo2_fitness_total)
-    for p_cross in crossed:
-        p_crossed.append(individuos[p_cross])
+        f1_hijos.append(hijo1_costo_f1)
+        f1_hijos.append(hijo2_costo_f1)
+        f2_hijos.append(hijo2_costo_f1)
+        f2_hijos.append(hijo2_costo_f2)
 
-    return p_crossed, hijos, demand_cr_hijos, demand_cl_hijos, Q_hijos, I_hijos, fit_hijos
+    return p_crossed, hijos, demand_cr_hijos, demand_cl_hijos, Q_hijos, I_hijos, f1_hijos, f2_hijos
 
 
-def mutation(hijos, demandas_hijos, n_centrosregionales, capacidad_cr, n_periodos, n_productos, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, n_centroslocales, costo_vehiculos_s, costo_vehiculos_p, costo_humano, w1, w2, Q_hijos, I_hijos, fit_hijos):
+def mutation(hijos, demandas_hijos, n_centrosregionales, capacidad_cr, n_periodos, n_productos, inventario, costo_instalaciones_cl, costo_instalaciones_cr, costo_compraproductos, costo_transporte, costo_inventario, costo_rutas_s, costo_rutas_p, n_centroslocales, costo_vehiculos_s, costo_vehiculos_p, costo_humano, Q_hijos, I_hijos, f1_hijos, f2_hijos):
     prob_mut = 0.1
     h_muts = int(len(hijos) * prob_mut)
     idx_hijos = np.array(range(len(hijos)))
@@ -366,19 +365,59 @@ def mutation(hijos, demandas_hijos, n_centrosregionales, capacidad_cr, n_periodo
             # costos f2
             cost_sufr_hum = fitness_f2(hijo_copy[3], n_periodos, costo_humano, n_centroslocales)
             costo_f2 = -cost_sufr_hum
-            # costo total del fitness
-            costo_total = (w1 * costo_f1) + (w2 * costo_f2)
             hijo_copy[0] = asig_primer_lvl
             hijo_copy[1] = rutas_primer_lvl
             hijos[idx_hijo_copy] = hijo_copy
             demandas_hijos[idx_hijo_copy] = demand_hijo_copy
             Q_hijos[idx_hijo_copy] = valoresQ
             I_hijos[idx_hijo_copy] = valoresI
-            fit_hijos[idx_hijo_copy] = costo_total
+            f1_hijos[idx_hijo_copy] = costo_f1
+            f2_hijos[idx_hijo_copy] = costo_f2
 
         else:
             ""
             # print("no se pudo")
             # return hijos, demandas_hijos, Q_hijos, I_hijos, fit_hijos
 
-    return hijos, demandas_hijos, Q_hijos, I_hijos, fit_hijos
+    return hijos, demandas_hijos, Q_hijos, I_hijos, f1_hijos, f2_hijos
+
+
+def reduction(n_poblacion, frentes_dict, distancias_t):
+    idx_poblation = []
+    revised = []
+    for frente, ind in frentes_dict.items():
+        if len(idx_poblation) < n_poblacion:
+            idx_poblation += ind
+            revised.append(frente)
+        else:
+            break
+
+    if len(idx_poblation) == n_poblacion:
+        ""
+    elif len(idx_poblation) < n_poblacion:
+        rest = n_poblacion - len(idx_poblation)
+        for frente, ind in frentes_dict.items():
+            if len(idx_poblation) == n_poblacion:
+                break
+            else:
+                if frente not in revised:
+                    if rest == 2:
+                        idx_poblation.append(ind[0])
+                        idx_poblation.append(ind[-1])
+                    elif rest < 2:
+                        idx_poblation.append(ind[0])
+                    elif rest > 2:
+                        distancias = []
+                        for i_temp in ind:
+                            distancias.append(distancias_t[i_temp])
+                        distancias_ord = sorted(distancias.items(), key=operator.itemgetter(1), reverse=True)
+                        while rest > 0:
+                            idx_poblation.append(distancias_ord.pop(0)[0])
+                            rest -= 1
+    elif len(idx_poblation) > n_poblacion:
+        r = len(idx_poblation) - n_poblacion
+        while r > 0:
+            idx_poblation.pop()
+            r -= 1
+
+    return idx_poblation
