@@ -563,6 +563,7 @@ def fitness_f2(rutas_lv, n_periodos, costo_humano, n_centros):
 
 
 def frentes(n_poblacion, valores_f1, valores_f2):
+    np.warnings.filterwarnings("ignore", category=RuntimeWarning)
     # construccion de frentes de la poblacion inicial
     dominancias = {}  # diccionario individuo:dominancias
     for j in range(n_poblacion):
