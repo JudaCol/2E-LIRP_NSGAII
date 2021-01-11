@@ -1,5 +1,4 @@
 import numpy as np
-# import matplotlib.pyplot as plt
 import openpyxl as px
 from itertools import groupby
 import operator
@@ -516,7 +515,7 @@ def fitness_f1(n_periodos, n_productos, asignaciones_segundo_lv, costo_instalaci
         for pr in range(n_productos):
             for t in range(n_periodos):
                 costprod += matrizQp[t][pr] * costo_compraproductos[pr, t]
-                costtrans += matrizQp[t][pr] * costo_transporte[cr - 1, (n_periodos * t) + pr]
+                costtrans += matrizQp[t][pr] * costo_transporte[cr - 1, (n_productos * t) + pr]
                 costinv += matrizIp[t][pr] * costo_inventario[cr - 1, pr]
 
     return cost_loc_cl, cost_loc_cr, costprod, costtrans, costinv, costrut2, costrut1, costveh2, costveh1
